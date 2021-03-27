@@ -69,10 +69,12 @@ function main(domr) {
             var ignoreCase = obj.ignoreCase ? true: false;
             var override = obj.override;
             var add = obj.addClasses;
-
+            var equals = obj.equals == undefined || obj.equals == null ? rules.equals: obj.equals;
             var doms;
             if (!override && rules.selector != undefined && rules.selector != null)
-                doms = [document.querySelectorAll(rules.selector)]
+                doms = [document.querySelectorAll(rules.selector)];
+            else if (!override && rules.selectors != undefined && rules.selectors != null)
+                doms = rules.selectors.map(s => document.querySelectorAll(s));
             else
                 doms = obj.selectors.map(s => document.querySelectorAll(s));
 
@@ -83,14 +85,14 @@ function main(domr) {
                     if (domr != undefined && domr != null && dom != null && !dom == domr)
                         return;
                     props.forEach((prop) => {
-                        tr(dom, translate, prop, obj["replace"], format, contains, append, ignoreCase, add);
+                        tr(dom, translate, prop, obj["replace"], format, contains, append, ignoreCase, add, equals);
                     });
                     if (props.length == 0 && format != undefined)
-                        tr(dom, translate, null, obj["replace"], format, contains, append, ignoreCase, add)
+                        tr(dom, translate, null, obj["replace"], format, contains, append, ignoreCase, add, equals);
                     else if (props.length == 0 && obj["replace"] == undefined)
                          tr(dom, translate, null, null, format, contains, append, ignoreCase, add)
                     else if (obj["replace"] != undefined)
-                        tr(dom, translate, null, obj["replace"], format, contains, append, ignoreCase, add);
+                        tr(dom, translate, null, obj["replace"], format, contains, append, ignoreCase, add, equals);
                 });
 
             }
@@ -135,6 +137,11 @@ document.kill = () => {
     enable = false;
 }
 
+document.equ = (str, b) => {
+    return equ(str,b);
+};
+
+
 document.update = () => {
     main(null)
 }
@@ -150,16 +157,23 @@ function cca (str, array, ignoreCase) {
     return a;
 }
 
+function equ (str, equ) {
+    var a = false;
+    if (equ == undefined || equ == null)
+        return true;
+    return str.toUpperCase() === equ.toUpperCase();
+}
+
 function lower(str, ignoreCase)
 {
     return ignoreCase ? str.ignoreCase(): str;
 }
 
-function tr(dom, translate, prop, replace, format, contains, append, ignoreCase, add) {
+function tr(dom, translate, prop, replace, format, contains, append, ignoreCase, add, equals) {
     if (dom == undefined || dom == null)
         return;
 
-    if (contains == null || (contains && !prop && cca(dom.innerHTML, contains, ignoreCase)) || (contains && prop && dom[prop] && cca(dom[prop], contains, ignoreCase)))
+    if (contains == null || (contains && !prop && cca(dom.innerHTML, contains, ignoreCase)) || (contains && prop && dom[prop] && cca(dom[prop], contains, ignoreCase) && equ(dom[prop], equals)))
         if (add && add.length != 0)
             add.forEach(s => dom.classList.add(s))
 
@@ -167,7 +181,7 @@ function tr(dom, translate, prop, replace, format, contains, append, ignoreCase,
     {
         if (prop != null)
         {
-            if (contains != undefined && contains != null && dom[prop] != null && dom[prop] != undefined && !cca(dom[prop], contains, ignoreCase))
+            if (contains != undefined && contains != null && dom[prop] != null && dom[prop] != undefined && !cca(dom[prop], contains, ignoreCase) && !equ(dom[prop], equals))
                 return;
             if (replace != null && dom[prop] != undefined)
             {
@@ -184,7 +198,7 @@ function tr(dom, translate, prop, replace, format, contains, append, ignoreCase,
         }
         else
         {
-            if (contains != undefined && contains != null && !cca(dom.innerHTML, contains, ignoreCase))
+            if (contains != undefined && contains != null && !cca(dom.innerHTML, contains, ignoreCase) || !equ(dom.innerHTML, equals))
                 return;
 
             if (replace != null)
@@ -213,7 +227,7 @@ function tr(dom, translate, prop, replace, format, contains, append, ignoreCase,
     if (prop != null)
     {
         if (document.querySelector(replace) != null)
-            if (contains != undefined && contains != null && dom[prop] != null && dom[prop] != undefined && cca(dom[prop], contains, ignoreCase))
+            if (contains != undefined && contains != null && dom[prop] != null && dom[prop] != undefined && cca(dom[prop], contains, ignoreCase) && equ(dom[prop], equals))
             {
                 var propaw = format.format(document.querySelector(replace).outerHTML) + (append != undefined && append != null ? append: "");
                 if (dom[prop] != propaw)
@@ -222,7 +236,7 @@ function tr(dom, translate, prop, replace, format, contains, append, ignoreCase,
     }
     else
         if (document.querySelector(replace) != null)
-              if (contains != undefined && contains != null && cca(dom.innerHTML, contains, ignoreCase))
+              if (contains != undefined && contains != null && cca(dom.innerHTML, contains, ignoreCase) && equ(dom.innerHTML, equals))
               {
                   var inn =  format.format(document.querySelector(replace).outerHTML) + (append != undefined && append != null ? append: "");
                   if (inn != dom.outerHTML)
