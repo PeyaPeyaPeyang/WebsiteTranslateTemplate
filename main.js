@@ -22,7 +22,7 @@ var json = [
         ]
     },
     {
-        "name": "Alert > Body2,
+        "name": "Alert > Body2",
         "path": "^\/2\/.*",
         "rules": [
             {
